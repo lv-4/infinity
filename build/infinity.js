@@ -67,6 +67,9 @@
   //
   // - `$el`: a jQuery element.
   // - `options`: an optional hash of options
+  //    - `width`
+  //    - `height`
+  //    - `landscape`
 
   function ListView($el, options) {
     options = options || {};
@@ -79,14 +82,25 @@
 
     this.lazy = !!options.lazy;
     this.lazyFn = options.lazy || null;
+    this.landscape = options.landscape || false;
 
     this.useElementScroll = options.useElementScroll === true;
 
     initBuffer(this);
 
-    this.top = this.$el.offset().top;
-    this.width = 0;
-    this.height = 0;
+    if (this.landscape) {
+        this.start = this.$el.offset().left;    
+    } else {
+        this.start = this.$el.offset().top;
+    }
+    this.width = options.width || 0;
+    this.height = options.height || 0;
+
+    if (this.landscape && this.height) {
+        this.$el.height(this.height);
+    } else if (this.width) {
+        this.$el.width(this.width);
+    }
 
     this.pages = [];
     this.startIndex = 0;
@@ -119,9 +133,17 @@
 
     if(pages.length > 0) {
       firstPage = pages[listView.startIndex];
-      $buffer.height(firstPage.top);
+      if (listView.landscape) {
+          $buffer.width(firstPage.start);
+      } else {
+          $buffer.height(firstPage.start);
+      }
     } else {
-      $buffer.height(0);
+      if (listView.landscape) {
+          $buffer.width(0);
+      } else {
+          $buffer.height(0);
+      }
     }
   }
 
@@ -142,14 +164,27 @@
   ListView.prototype.append = function(obj) {
     if(!obj || !obj.length) return null;
 
-    var lastPage,
-        item = convertToItem(this, obj),
-        pages = this.pages;
+    var item = convertToItem(this, obj),
+        pages = this.pages,
+        lastPage = pages[pages.length - 1];
 
-    this.height += item.height;
-    this.$el.height(this.height);
-
-    lastPage = pages[pages.length - 1];
+    if (this.landscape) {
+        this.width += item.width;
+        var width = this.width;
+        /*
+        // difficulty when the listview height is higher than the row of items: should rows be stacked?
+        // for now, let's assume we only have 1 row
+        var width = this.width,
+            firstPage = pages[this.startIndex];
+        if (firstPage) {
+            width = firstPage.width;
+        }
+        */
+        this.$el.width(width);
+    } else {
+        this.height += item.height;
+        this.$el.height(this.height);
+    }
 
     if(!lastPage || !lastPage.hasVacancy()) {
       lastPage = new Page(this);
@@ -263,7 +298,7 @@
     else {
       listView.$el.append(listItem.$el);
     }
-    updateCoords(listItem, prepend ? 0 : listView.height);
+    updateCoords(listItem, prepend ? 0 : listView);
     listItem.$el.detach();
   }
 
@@ -315,11 +350,19 @@
   function updateStartIndex(listView, prepended) {
     var index, length, pages, lastIndex, nextLastIndex,
         startIndex = listView.startIndex,
-        viewRef = listView.$scrollParent,
-        viewTop = viewRef.scrollTop() - listView.top,
-        viewHeight = viewRef.height(),
-        viewBottom = viewTop + viewHeight,
-        nextIndex = startIndexWithinRange(listView, viewTop, viewBottom);
+        viewRef = listView.$scrollParent;
+
+    if (listView.landscape) {
+      var viewLeft = $window.scrollLeft() - listView.start,
+          viewWidth = $window.width(),
+          viewRight = viewLeft + viewWidth,
+          nextIndex = startIndexWithinRange(listView, viewLeft, viewRight);
+    } else {
+      var viewTop = $window.scrollTop() - listView.start,
+          viewHeight = $window.height(),
+          viewBottom = viewTop + viewHeight,
+          nextIndex = startIndexWithinRange(listView, viewTop, viewBottom);
+    }
 
     if( nextIndex < 0 || (nextIndex === startIndex && !prepended)) return startIndex;
 
@@ -487,11 +530,11 @@
   // Takes:
   //
   // - `listView`: the ListView whose startIndex you're calculating.
-  // - `top`: the top of the range.
-  // - `bottom`: the bottom of the range.
+  // - `start`: the start of the range.
+  // - `end`: the end of the range.
 
-  function startIndexWithinRange(listView, top, bottom) {
-    var index = indexWithinRange(listView, top, bottom);
+  function startIndexWithinRange(listView, start, end) {
+    var index = indexWithinRange(listView, start, end);
     index = Math.max(index - NUM_BUFFER_PAGES, 0);
     index = Math.min(index, listView.pages.length);
     return index;
@@ -507,13 +550,13 @@
   // Takes:
   //
   // - `listView`: the ListView instance whose pages you're looking at.
-  // - `top`: the top of the range.
-  // - `bottom`: the bottom of the range.
+  // - `start`: the start of the range.
+  // - `end`: the end of the range.
 
-  function indexWithinRange(listView, top, bottom) {
+  function indexWithinRange(listView, start, end) {
     var index, length, curr, startIndex, midpoint, diff, prevDiff,
         pages = listView.pages,
-        rangeMidpoint = top + (bottom - top)/2;
+        rangeMidpoint = start + (end - start)/2;
 
     // Start looking at the index of the page last contained by the screen --
     // not the first page in the onscreen pages
@@ -523,13 +566,21 @@
     if(pages.length <= 0) return -1;
 
     curr = pages[startIndex];
-    midpoint = curr.top + curr.height/2;
+    if (listView.landscape) {
+      midpoint = curr.start + curr.width/2;
+    } else {
+      midpoint = curr.start + curr.height/2;
+    }
     prevDiff = rangeMidpoint - midpoint;
     if(prevDiff < 0) {
       // Search above
       for(index = startIndex - 1; index >= 0; index--) {
         curr = pages[index];
-        midpoint = curr.top + curr.height/2;
+        if (listView.landscape) {
+          midpoint = curr.start + curr.width/2;
+        } else {
+          midpoint = curr.start + curr.height/2;
+        }
         diff = rangeMidpoint - midpoint;
         if(diff > 0) {
           if(diff < -prevDiff) return index;
@@ -542,7 +593,11 @@
       // Search below
       for(index = startIndex + 1, length = pages.length; index < length; index++) {
         curr = pages[index];
-        midpoint = curr.top + curr.height/2;
+        if (listView.landscape) {
+          midpoint = curr.start + curr.width/2;
+        } else {
+          midpoint = curr.start + curr.height/2;
+        }
         diff = rangeMidpoint - midpoint;
         if(diff < 0) {
           if(-diff < prevDiff) return index;
@@ -713,8 +768,8 @@
     this.id = PageRegistry.generatePageId(this);
     this.$el.attr(PAGE_ID_ATTRIBUTE, this.id);
 
-    this.top = 0;
-    this.bottom = 0;
+    this.start = 0;
+    this.end = 0;
     this.width = 0;
     this.height = 0;
 
@@ -736,10 +791,15 @@
     var items = this.items;
 
     // Recompute coords, sizing.
-    if(items.length === 0) this.top = item.top;
-    this.bottom = item.bottom;
-    this.width = this.width > item.width ? this.width : item.width;
-    this.height = this.bottom - this.top;
+    if(items.length === 0) this.start = item.start;
+    this.end = item.end;
+    if (this.parent.landscape) {
+      this.height = this.height > item.height ? this.height : item.height;
+      this.width = this.end - this.start;
+    } else {
+      this.width = this.width > item.width ? this.width : item.width;
+      this.height = this.end - this.start;
+    }
 
     items.push(item);
     item.parent = this;
@@ -761,9 +821,15 @@
     var items = this.items;
 
     // Recompute coords, sizing.
-    this.bottom += item.height;
-    this.width = this.width > item.width ? this.width : item.width;
-    this.height = this.bottom - this.top;
+    if (this.parent.landscape) {
+      this.end += item.width;
+      this.height = this.height > item.height ? this.height : item.height;
+      this.width = this.end - this.start;
+    } else {
+      this.end += item.height;
+      this.width = this.width > item.width ? this.width : item.width;
+      this.height = this.end - this.start;
+    }
 
     items.splice(0,0,item);
     item.parent = this;
@@ -779,7 +845,16 @@
 
   Page.prototype.hasVacancy = function() {
     var viewRef = this.parent.$scrollParent;
-    return this.height < viewRef.height() * config.PAGE_TO_SCREEN_RATIO;
+    if (this.parent.landscape) {
+      if (this.parent.height === 0) {
+        return this.width < $window.width() * config.PAGE_TO_SCREEN_RATIO;
+      } else {
+        // 1 row
+        return true;
+      }
+    } else {
+      return this.height < $window.height() * config.PAGE_TO_SCREEN_RATIO;
+    }
   };
 
 
@@ -907,8 +982,13 @@
     if(foundIndex == null) return false;
 
     items.splice(foundIndex, 1);
-    page.bottom -= item.height;
-    page.height = page.bottom - page.top;
+    if (page.parent.landscape) {
+      page.end -= item.width;
+      page.width = page.end - page.start;
+    } else {
+      page.end -= item.height;
+      page.height = page.end - page.start;
+    }
     if(page.hasVacancy()) tooSmall(page.parent, page);
 
     return true;
@@ -920,7 +1000,7 @@
   //
   // An individual item in the ListView.
   //
-  // Has cached top, bottom, width, and height properties, determined from
+  // Has cached start, end, width, and height properties, determined from
   // jQuery. This positioning data will be determined when the ListItem is
   // inserted into a ListView; it can't be determined ahead of time.
   //
@@ -931,8 +1011,8 @@
 
     this.parent = null;
 
-    this.top = 0;
-    this.bottom = 0;
+    this.start = 0;
+    this.end = 0;
     this.width = 0;
     this.height = 0;
   }
@@ -943,8 +1023,8 @@
   // Clones the ListItem.
   ListItem.prototype.clone = function() {
     var item = new ListItem(this.$el);
-    item.top = this.top;
-    item.bottom = this.bottom;
+    item.start = this.start;
+    item.end = this.end;
     item.width = this.width;
     item.height = this.height;
     return item;
@@ -979,15 +1059,22 @@
   // Takes:
   //
   //  - `listItem`: the ListItem whose cached coordinates you want to update.
-  //  - `yOffset`: the y-offset of the ListItem from its ListView parent.
+  //  - `listView`: the ListView
 
-  function updateCoords(listItem, yOffset) {
+  function updateCoords(listItem, listView) {
     var $el = listItem.$el;
 
-    listItem.top = yOffset;
-    listItem.height = $el.outerHeight(true);
-    listItem.bottom = listItem.top + listItem.height;
-    listItem.width = $el.width();
+    if (listView.landscape) {
+      listItem.start = listView.width;
+      listItem.width = $el.outerWidth(true);
+      listItem.end = listItem.start + listItem.width;
+      listItem.height = $el.height();
+    } else {
+      listItem.start = listView.height;
+      listItem.height = $el.outerHeight(true);
+      listItem.end = listItem.start + listItem.height;
+      listItem.width = $el.width();
+    }
   }
 
 
