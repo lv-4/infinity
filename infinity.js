@@ -1070,12 +1070,12 @@
     var $el = listItem.$el;
 
     if (listView.landscape) {
-      listItem.start = listView.width;
+      listItem.start = (listView !== 0) ? listView.width : 0;
       listItem.width = $el.outerWidth(true);
       listItem.end = listItem.start + listItem.width;
       listItem.height = $el.height();
     } else {
-      listItem.start = listView.height;
+      listItem.start = (listView !== 0) ? listView.height : 0;
       listItem.height = $el.outerHeight(true);
       listItem.end = listItem.start + listItem.height;
       listItem.width = $el.width();
