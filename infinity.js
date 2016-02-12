@@ -353,13 +353,13 @@
         viewRef = listView.$scrollParent;
 
     if (listView.landscape) {
-      var viewLeft = $window.scrollLeft() - listView.start,
-          viewWidth = $window.width(),
+      var viewLeft = viewRef.scrollLeft() - listView.start,
+          viewWidth = viewRef.width(),
           viewRight = viewLeft + viewWidth,
           nextIndex = startIndexWithinRange(listView, viewLeft, viewRight);
     } else {
-      var viewTop = $window.scrollTop() - listView.start,
-          viewHeight = $window.height(),
+      var viewTop = viewRef.scrollTop() - listView.start,
+          viewHeight = viewRef.height(),
           viewBottom = viewTop + viewHeight,
           nextIndex = startIndexWithinRange(listView, viewTop, viewBottom);
     }
