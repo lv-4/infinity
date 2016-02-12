@@ -215,8 +215,13 @@
         item = convertToItem(this, obj, true),
         pages = this.pages;
 
-    this.height += item.height;
-    this.$el.height(this.height);
+    if (this.landscape) {
+      this.width += item.width;
+      this.$el.width(this.width);
+    } else {
+      this.height += item.height;
+      this.$el.height(this.height);
+    }
 
     firstPage = pages[0];
 
