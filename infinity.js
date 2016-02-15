@@ -74,7 +74,7 @@
   function ListView($el, options) {
     options = options || {};
 
-    this.$el = blankDiv();
+    this.$el = $el;
     this.$shadow = blankDiv();
     $el.append(this.$el);
     // don't append the shadow element -- it's meant to only be used for
