@@ -88,9 +88,9 @@
     initBuffer(this);
 
     if (this.landscape) {
-        this.start = this.$el.offset().left;    
+        this.begin = this.$el.offset().left;    
     } else {
-        this.start = this.$el.offset().top;
+        this.begin = this.$el.offset().top;
     }
     this.width = options.width || 0;
     this.height = options.height || 0;
@@ -133,9 +133,9 @@
     if(pages.length > 0) {
       firstPage = pages[listView.startIndex];
       if (listView.landscape) {
-          $buffer.width(firstPage.start);
+          $buffer.width(firstPage.begin);
       } else {
-          $buffer.height(firstPage.start);
+          $buffer.height(firstPage.begin);
       }
     } else {
       if (listView.landscape) {
@@ -357,12 +357,12 @@
         viewRef = listView.$scrollParent;
 
     if (listView.landscape) {
-      var viewLeft = viewRef.scrollLeft() - listView.start,
+      var viewLeft = viewRef.scrollLeft() - listView.begin,
           viewWidth = viewRef.width(),
           viewRight = viewLeft + viewWidth,
           nextIndex = startIndexWithinRange(listView, viewLeft, viewRight);
     } else {
-      var viewTop = viewRef.scrollTop() - listView.start,
+      var viewTop = viewRef.scrollTop() - listView.begin,
           viewHeight = viewRef.height(),
           viewBottom = viewTop + viewHeight,
           nextIndex = startIndexWithinRange(listView, viewTop, viewBottom);
@@ -571,9 +571,9 @@
 
     curr = pages[startIndex];
     if (listView.landscape) {
-      midpoint = curr.start + curr.width/2;
+      midpoint = curr.begin + curr.width/2;
     } else {
-      midpoint = curr.start + curr.height/2;
+      midpoint = curr.begin + curr.height/2;
     }
     prevDiff = rangeMidpoint - midpoint;
     if(prevDiff < 0) {
@@ -581,9 +581,9 @@
       for(index = startIndex - 1; index >= 0; index--) {
         curr = pages[index];
         if (listView.landscape) {
-          midpoint = curr.start + curr.width/2;
+          midpoint = curr.begin + curr.width/2;
         } else {
-          midpoint = curr.start + curr.height/2;
+          midpoint = curr.begin + curr.height/2;
         }
         diff = rangeMidpoint - midpoint;
         if(diff > 0) {
@@ -598,9 +598,9 @@
       for(index = startIndex + 1, length = pages.length; index < length; index++) {
         curr = pages[index];
         if (listView.landscape) {
-          midpoint = curr.start + curr.width/2;
+          midpoint = curr.begin + curr.width/2;
         } else {
-          midpoint = curr.start + curr.height/2;
+          midpoint = curr.begin + curr.height/2;
         }
         diff = rangeMidpoint - midpoint;
         if(diff < 0) {
@@ -772,7 +772,7 @@
     this.id = PageRegistry.generatePageId(this);
     this.$el.attr(PAGE_ID_ATTRIBUTE, this.id);
 
-    this.start = 0;
+    this.begin = 0;
     this.end = 0;
     this.width = 0;
     this.height = 0;
@@ -795,14 +795,14 @@
     var items = this.items;
 
     // Recompute coords, sizing.
-    if(items.length === 0) this.start = item.start;
+    if(items.length === 0) this.begin = item.begin;
     this.end = item.end;
     if (this.parent.landscape) {
       this.height = this.height > item.height ? this.height : item.height;
-      this.width = this.end - this.start;
+      this.width = this.end - this.begin;
     } else {
       this.width = this.width > item.width ? this.width : item.width;
-      this.height = this.end - this.start;
+      this.height = this.end - this.begin;
     }
 
     items.push(item);
@@ -828,11 +828,11 @@
     if (this.parent.landscape) {
       this.end += item.width;
       this.height = this.height > item.height ? this.height : item.height;
-      this.width = this.end - this.start;
+      this.width = this.end - this.begin;
     } else {
       this.end += item.height;
       this.width = this.width > item.width ? this.width : item.width;
-      this.height = this.end - this.start;
+      this.height = this.end - this.begin;
     }
 
     items.splice(0,0,item);
@@ -988,10 +988,10 @@
     items.splice(foundIndex, 1);
     if (page.parent.landscape) {
       page.end -= item.width;
-      page.width = page.end - page.start;
+      page.width = page.end - page.begin;
     } else {
       page.end -= item.height;
-      page.height = page.end - page.start;
+      page.height = page.end - page.begin;
     }
     if(page.hasVacancy()) tooSmall(page.parent, page);
 
@@ -1015,7 +1015,7 @@
 
     this.parent = null;
 
-    this.start = 0;
+    this.begin = 0;
     this.end = 0;
     this.width = 0;
     this.height = 0;
@@ -1027,7 +1027,7 @@
   // Clones the ListItem.
   ListItem.prototype.clone = function() {
     var item = new ListItem(this.$el);
-    item.start = this.start;
+    item.begin = this.begin;
     item.end = this.end;
     item.width = this.width;
     item.height = this.height;
@@ -1069,14 +1069,14 @@
     var $el = listItem.$el;
 
     if (listView.landscape) {
-      listItem.start = (listView !== 0) ? listView.width : 0;
+      listItem.begin = (listView !== 0) ? listView.width : 0;
       listItem.width = $el.outerWidth(true);
-      listItem.end = listItem.start + listItem.width;
+      listItem.end = listItem.begin + listItem.width;
       listItem.height = $el.height();
     } else {
-      listItem.start = (listView !== 0) ? listView.height : 0;
+      listItem.begin = (listView !== 0) ? listView.height : 0;
       listItem.height = $el.outerHeight(true);
-      listItem.end = listItem.start + listItem.height;
+      listItem.end = listItem.begin + listItem.height;
       listItem.width = $el.width();
     }
   }
