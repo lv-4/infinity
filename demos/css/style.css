@@ -1,0 +1,168 @@
+/**
+ * GENERAL
+ * --------------------------------
+ */
+
+	/* box-sizing: border-box FTW — http://www.paulirish.com/2012/box-sizing-border-box-ftw/ */
+	html {
+		box-sizing: border-box;
+	}
+	*, *:before, *:after {
+		box-sizing: inherit;
+	}
+
+	/* Clearfix — https://css-tricks.com/snippets/css/clear-fix/ */
+	.vertical:after,
+	.infinity-wrapper:after,
+	.infinity-item:after {
+		content: "";
+		display: table;
+		clear: both;
+	}
+
+	html, body {
+		height: 100%;
+	}
+
+
+/**
+ * ABOUT BOX
+ * --------------------------------
+ */
+
+	#about {
+		position: fixed;
+		padding: 10px;
+		bottom: 10px;
+		left: 10px;
+		border: 1px solid rgba(0,0,0,0.5);
+		background: #fff;
+		font-family: Helvetica;
+		color: #5a5a5a;
+		opacity: 0.5;
+		transition: opacity 0.1s ease-in-out;
+	}
+	#about:hover {
+		opacity: 1;
+	}
+	#about h1,
+	#about ol,
+	#about li {
+		margin: 0;
+		padding: 0;
+		font-size: 1em;
+	}
+	#about h1 {
+		margin-bottom: 0.2em;
+	}
+	#about ol {
+		padding-left: 1em;
+	}
+	#about a {
+		color: #5a5a5a;
+	}
+	#about a:hover {
+		color: #000;
+	}
+	#about li.active,
+	#about li.active a {
+		color: #000;
+		font-weight: bold;
+	}
+
+
+/**
+ * INFINITY: ITEMS
+ * --------------------------------
+ */
+
+ 	/*
+
+		BASE SIZES USED:
+		$item-size = 400px
+		$gutter-size = 10px
+		$number-of-lists = 2
+
+		CALCULATED SIZES:
+		size of content inside $item-size = $item-size = 400px
+		size of content--small inside $item-size = ($item-size / 2) - ($gutter-size / 2) = 200px - 5px = 195px
+		$scrollParent size = ($item-size + $gutter-size) * $number-of-lists = (400 + 10) * 2 = 820px
+
+		(Note: size = width when scrolling vertical, size = height when scrolling horizontal)
+
+ 	 */
+
+	.infinity-item .item-content, .infinity-item .item-content img {
+		display: block;
+		width: 400px;
+		height: 400px;
+	}
+	.infinity-item .item-content--small, .infinity-item .item-content--small img {
+		width: 195px;
+		height: 195px;
+	}
+	.infinity-item .item-content a {
+		display: block;
+	}
+
+
+/**
+ * INFINITY: VERTICAL LISTS
+ * --------------------------------
+ */
+
+	.vertical {
+		width: 820px;
+		height: 80%;
+		margin: 7% auto;
+		overflow-y: scroll;
+	}
+
+	.vertical .infinity-wrapper {
+		padding-right: 10px; /* add some whitespace to the right, to create a gutter between the colums */
+		float: left;
+	}
+
+	.vertical .infinity-item {
+		margin-bottom: 10px;	/* add some whitespace to the bottom, to create a gutter between the .infinity-items */
+	}
+
+	/* in a vertical scroll small content blocks are placed next to eachother, inside one .infinity-item */
+	.vertical .infinity-item .item-content--small {
+		float: left;
+	}
+	.vertical .infinity-item .item-content--small + .item-content--small {
+		float: right;
+	}
+
+
+/**
+ * INFINITY: HORIZONTAL LISTS
+ * --------------------------------
+ */
+
+	.horizontal {
+		height: 820px;
+		width: 80%;
+		margin: 0 auto;
+		overflow-x: scroll;
+	}
+
+	.horizontal .infinity-wrapper {
+		height: 410px;
+		white-space: nowrap; /* make sure the items are placed next to eachother (step 1 of 2) */
+	}
+
+	.horizontal .infinity-item {
+		display: inline-block; /* make sure the items are placed next to eachother (step 2 of 2) */
+		padding-right: 10px; /* add some whitespace to the right, to create a gutter */
+	}
+
+	/* as infinity injects intermediary diffs (a front buffer, followed by pages) we also need to make sure that they stay next to eachother */
+	.horizontal [data-infinity-buffer], .horizontal [data-infinity-pageid] {
+		display: inline-block;
+	}
+
+	.horizontal .infinity-item .item-content--small + .item-content--small {
+		margin-top: 10px;
+	}
