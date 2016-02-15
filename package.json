@@ -8,7 +8,8 @@
   "homepage": "http://airbnb.io/infinity/",
 
   "contributors": [
-    {"name": "Matt Baker", "url": "http://github.com/reissbaker"}
+    {"name": "Matt Baker", "url": "http://github.com/reissbaker"},
+    {"name": "Bram(us) Van Damme", "url": "https://www.bram.us/"}
   ],
 
   "repository": {
