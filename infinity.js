@@ -78,9 +78,6 @@
 
     this.$el = $el;
     this.$shadow = blankDiv();
-    $el.append(this.$el);
-    // don't append the shadow element -- it's meant to only be used for
-    // finding elements outside of the DOM
 
     this.lazy = !!options.lazy;
     this.lazyFn = options.lazy || null;
