@@ -708,12 +708,12 @@
 
       attach: function(listView) {
         if(!listView.eventIsBound) {
-          listView.$scrollParent.on('scroll', scrollHandler);
+          listView.$scrollParent.on('scroll.infinity', scrollHandler);
           listView.eventIsBound = true;
         }
 
         if(!eventIsBound) {
-          $window.on('resize', resizeHandler);
+          $window.on('resize.infinity', resizeHandler);
           eventIsBound = true;
         }
         boundViews.push(listView);
@@ -736,7 +736,7 @@
       detach: function(listView) {
         var index, length;
         if(listView.eventIsBound) {
-          listView.$scrollParent.on('scroll', scrollHandler);
+          listView.$scrollParent.off('scroll.infinity');
           listView.eventIsBound = false;
         }
 
@@ -744,7 +744,7 @@
           if(boundViews[index] === listView) {
             boundViews.splice(index, 1);
             if(boundViews.length === 0) {
-              $window.off('resize', resizeHandler);
+              $window.off('resize.infinity');
               eventIsBound = false;
             }
             return true;
