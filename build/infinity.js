@@ -52,6 +52,7 @@
   // Config:
   config.PAGE_TO_SCREEN_RATIO = 3;
   config.SCROLL_THROTTLE = 350;
+  config.SCROLL_HORIZONTAL_HIJACK = true;
 
 
 
@@ -67,6 +68,7 @@
   //
   // - `$el`: a jQuery element.
   // - `options`: an optional hash of options
+  //    - `scrollParent`
   //    - `width`
   //    - `height`
   //    - `landscape`
@@ -74,24 +76,19 @@
   function ListView($el, options) {
     options = options || {};
 
-    this.$el = blankDiv();
+    this.$el = $el;
     this.$shadow = blankDiv();
-    $el.append(this.$el);
-    // don't append the shadow element -- it's meant to only be used for
-    // finding elements outside of the DOM
 
     this.lazy = !!options.lazy;
     this.lazyFn = options.lazy || null;
     this.landscape = options.landscape || false;
 
-    this.useElementScroll = options.useElementScroll === true;
-
     initBuffer(this);
 
     if (this.landscape) {
-        this.start = this.$el.offset().left;    
+        this.begin = this.$el.offset().left;    
     } else {
-        this.start = this.$el.offset().top;
+        this.begin = this.$el.offset().top;
     }
     this.width = options.width || 0;
     this.height = options.height || 0;
@@ -105,7 +102,7 @@
     this.pages = [];
     this.startIndex = 0;
 
-    this.$scrollParent = this.useElementScroll ? $el : $window;
+    this.$scrollParent = options.scrollParent || $window;
 
     DOMEvent.attach(this);
   }
@@ -117,6 +114,7 @@
 
   function initBuffer(listView) {
     listView._$buffer = blankDiv()
+                        .attr('data-infinity-buffer', '')
                         .prependTo(listView.$el);
   }
 
@@ -134,9 +132,9 @@
     if(pages.length > 0) {
       firstPage = pages[listView.startIndex];
       if (listView.landscape) {
-          $buffer.width(firstPage.start);
+          $buffer.width(firstPage.begin);
       } else {
-          $buffer.height(firstPage.start);
+          $buffer.height(firstPage.begin);
       }
     } else {
       if (listView.landscape) {
@@ -358,12 +356,12 @@
         viewRef = listView.$scrollParent;
 
     if (listView.landscape) {
-      var viewLeft = viewRef.scrollLeft() - listView.start,
+      var viewLeft = viewRef.scrollLeft() - listView.begin,
           viewWidth = viewRef.width(),
           viewRight = viewLeft + viewWidth,
           nextIndex = startIndexWithinRange(listView, viewLeft, viewRight);
     } else {
-      var viewTop = viewRef.scrollTop() - listView.start,
+      var viewTop = viewRef.scrollTop() - listView.begin,
           viewHeight = viewRef.height(),
           viewBottom = viewTop + viewHeight,
           nextIndex = startIndexWithinRange(listView, viewTop, viewBottom);
@@ -572,9 +570,9 @@
 
     curr = pages[startIndex];
     if (listView.landscape) {
-      midpoint = curr.start + curr.width/2;
+      midpoint = curr.begin + curr.width/2;
     } else {
-      midpoint = curr.start + curr.height/2;
+      midpoint = curr.begin + curr.height/2;
     }
     prevDiff = rangeMidpoint - midpoint;
     if(prevDiff < 0) {
@@ -582,9 +580,9 @@
       for(index = startIndex - 1; index >= 0; index--) {
         curr = pages[index];
         if (listView.landscape) {
-          midpoint = curr.start + curr.width/2;
+          midpoint = curr.begin + curr.width/2;
         } else {
-          midpoint = curr.start + curr.height/2;
+          midpoint = curr.begin + curr.height/2;
         }
         diff = rangeMidpoint - midpoint;
         if(diff > 0) {
@@ -599,9 +597,9 @@
       for(index = startIndex + 1, length = pages.length; index < length; index++) {
         curr = pages[index];
         if (listView.landscape) {
-          midpoint = curr.start + curr.width/2;
+          midpoint = curr.begin + curr.width/2;
         } else {
-          midpoint = curr.start + curr.height/2;
+          midpoint = curr.begin + curr.height/2;
         }
         diff = rangeMidpoint - midpoint;
         if(diff < 0) {
@@ -640,7 +638,6 @@
 
   var DOMEvent = (function() {
     var eventIsBound = false,
-        scrollScheduled = false,
         resizeTimeout = null,
         boundViews = [];
 
@@ -651,9 +648,9 @@
     // and disallows future scheduling.
 
     function scrollHandler() {
-      if(!scrollScheduled) {
-        setTimeout(scrollAll, config.SCROLL_THROTTLE);
-        scrollScheduled = true;
+      if(!this.scrollScheduled) {
+        setTimeout(scrollAll.bind(this), config.SCROLL_THROTTLE);
+        this.scrollScheduled = true;
       }
     }
 
@@ -665,11 +662,41 @@
     // scheduled.
 
     function scrollAll() {
-      var index, length;
+
+      var index, length,
+          $this = $(this),
+          boundViews = $this.data('infinity-boundviews');
+
+      // Update the pages in view
       for(index = 0, length = boundViews.length; index < length; index++) {
         updateStartIndex(boundViews[index]);
       }
-      scrollScheduled = false;
+
+      // Calc current scroll positions
+      if (boundViews[0].landscape) {
+        var currentScrollPositionBegin = $this.scrollLeft(),
+            currentScrollPositionEnd =  currentScrollPositionBegin + $this.width(),
+            targetScrollPositionStart = 0 + 250,
+            targetScrollPositionEnd = this.scrollWidth - 250;
+      } else {
+        var currentScrollPositionBegin = $this.scrollTop(),
+            currentScrollPositionEnd =  currentScrollPositionBegin + $this.height(),
+            targetScrollPositionStart = 0 + 250,
+            targetScrollPositionEnd = this.scrollHeight - 250;
+      }
+
+      // Check for beginReached
+      if (currentScrollPositionBegin <= targetScrollPositionStart) {
+        $this.trigger('infinity.beginReached');
+      }
+
+      // Check for endReached
+      if (targetScrollPositionEnd <= currentScrollPositionEnd) {
+        $this.trigger('infinity.endReached');
+      }
+
+      this.scrollScheduled = false;
+
     }
 
 
@@ -708,16 +735,38 @@
       //   event.
 
       attach: function(listView) {
-        if(!listView.eventIsBound) {
-          listView.$scrollParent.on('scroll', scrollHandler);
-          listView.eventIsBound = true;
+
+        // Set up scroll events on $scrollParent
+        if(!listView.$scrollParent.data('infinity-eventbound')) {
+
+          // Regular scroll: recalc which pages to show
+          listView.$scrollParent.on('scroll.infinity', scrollHandler);
+
+          // Mousewheel scroll: scroll horizontally when scrolling vertically
+          if (listView.landscape && config.SCROLL_HORIZONTAL_HIJACK) {
+            listView.$scrollParent.on('mousewheel DOMMouseScroll', function(e) {
+              var delta = e.originalEvent.detail || e.originalEvent.wheelDelta;
+              this.scrollLeft -= delta;
+              e.preventDefault();
+            });
+          }
+
+          // Keep track of some things
+          listView.$scrollParent.data('infinity-eventbound', true);
+          listView.$scrollParent.data('infinity-boundviews', []);
+
         }
 
+        // Recalculate some stuff on resize
         if(!eventIsBound) {
-          $window.on('resize', resizeHandler);
+          $window.on('resize.infinity', resizeHandler);
           eventIsBound = true;
         }
+
+        // Keep track of the views (both globally, as on the scrollparent)
         boundViews.push(listView);
+        listView.$scrollParent.data('infinity-boundviews').push(listView);
+
       },
 
 
@@ -736,16 +785,16 @@
 
       detach: function(listView) {
         var index, length;
-        if(listView.eventIsBound) {
-          listView.$scrollParent.on('scroll', scrollHandler);
-          listView.eventIsBound = false;
+        if(listView.$scrollParent.data('infinity-eventbound')) {
+          listView.$scrollParent.off('scroll.infinity');
+          listView.$scrollParent.data('infinity-eventbound', false);
         }
 
         for(index = 0, length = boundViews.length; index < length; index++) {
           if(boundViews[index] === listView) {
             boundViews.splice(index, 1);
             if(boundViews.length === 0) {
-              $window.off('resize', resizeHandler);
+              $window.off('resize.infinity');
               eventIsBound = false;
             }
             return true;
@@ -773,7 +822,7 @@
     this.id = PageRegistry.generatePageId(this);
     this.$el.attr(PAGE_ID_ATTRIBUTE, this.id);
 
-    this.start = 0;
+    this.begin = 0;
     this.end = 0;
     this.width = 0;
     this.height = 0;
@@ -796,14 +845,14 @@
     var items = this.items;
 
     // Recompute coords, sizing.
-    if(items.length === 0) this.start = item.start;
+    if(items.length === 0) this.begin = item.begin;
     this.end = item.end;
     if (this.parent.landscape) {
       this.height = this.height > item.height ? this.height : item.height;
-      this.width = this.end - this.start;
+      this.width = this.end - this.begin;
     } else {
       this.width = this.width > item.width ? this.width : item.width;
-      this.height = this.end - this.start;
+      this.height = this.end - this.begin;
     }
 
     items.push(item);
@@ -829,11 +878,11 @@
     if (this.parent.landscape) {
       this.end += item.width;
       this.height = this.height > item.height ? this.height : item.height;
-      this.width = this.end - this.start;
+      this.width = this.end - this.begin;
     } else {
       this.end += item.height;
       this.width = this.width > item.width ? this.width : item.width;
-      this.height = this.end - this.start;
+      this.height = this.end - this.begin;
     }
 
     items.splice(0,0,item);
@@ -989,10 +1038,10 @@
     items.splice(foundIndex, 1);
     if (page.parent.landscape) {
       page.end -= item.width;
-      page.width = page.end - page.start;
+      page.width = page.end - page.begin;
     } else {
       page.end -= item.height;
-      page.height = page.end - page.start;
+      page.height = page.end - page.begin;
     }
     if(page.hasVacancy()) tooSmall(page.parent, page);
 
@@ -1016,7 +1065,7 @@
 
     this.parent = null;
 
-    this.start = 0;
+    this.begin = 0;
     this.end = 0;
     this.width = 0;
     this.height = 0;
@@ -1028,7 +1077,7 @@
   // Clones the ListItem.
   ListItem.prototype.clone = function() {
     var item = new ListItem(this.$el);
-    item.start = this.start;
+    item.begin = this.begin;
     item.end = this.end;
     item.width = this.width;
     item.height = this.height;
@@ -1070,14 +1119,14 @@
     var $el = listItem.$el;
 
     if (listView.landscape) {
-      listItem.start = (listView !== 0) ? listView.width : 0;
+      listItem.begin = (listView !== 0) ? listView.width : 0;
       listItem.width = $el.outerWidth(true);
-      listItem.end = listItem.start + listItem.width;
+      listItem.end = listItem.begin + listItem.width;
       listItem.height = $el.height();
     } else {
-      listItem.start = (listView !== 0) ? listView.height : 0;
+      listItem.begin = (listView !== 0) ? listView.height : 0;
       listItem.height = $el.outerHeight(true);
-      listItem.end = listItem.start + listItem.height;
+      listItem.end = listItem.begin + listItem.height;
       listItem.width = $el.width();
     }
   }
