@@ -114,6 +114,7 @@
 
   function initBuffer(listView) {
     listView._$buffer = blankDiv()
+                        .attr('data-infinity-buffer', '')
                         .prependTo(listView.$el);
   }
 
