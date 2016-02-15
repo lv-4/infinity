@@ -52,6 +52,7 @@
   // Config:
   config.PAGE_TO_SCREEN_RATIO = 3;
   config.SCROLL_THROTTLE = 350;
+  config.SCROLL_HORIZONTAL_HIJACK = true;
 
 
 
@@ -711,17 +712,35 @@
       //   event.
 
       attach: function(listView) {
+
+        // Set up scroll events on $scrollParent
         if(!listView.$scrollParent.data('infinity-eventbound')) {
+
+          // Regular scroll: recalc which pages to show
           listView.$scrollParent.on('scroll.infinity', scrollHandler);
+
+          // Mousewheel scroll: scroll horizontally when scrolling vertically
+          if (listView.landscape && config.SCROLL_HORIZONTAL_HIJACK) {
+            listView.$scrollParent.on('mousewheel DOMMouseScroll', function(e) {
+              var delta = e.originalEvent.detail || e.originalEvent.wheelDelta;
+              this.scrollLeft -= delta;
+              e.preventDefault();
+            });
+          }
+
+          // Keep track of some things
           listView.$scrollParent.data('infinity-eventbound', true);
           listView.$scrollParent.data('infinity-boundviews', []);
+
         }
 
+        // Recalculate some stuff on resize
         if(!eventIsBound) {
           $window.on('resize.infinity', resizeHandler);
           eventIsBound = true;
         }
 
+        // Keep track of the views (both globally, as on the scrollparent)
         boundViews.push(listView);
         listView.$scrollParent.data('infinity-boundviews').push(listView);
 
