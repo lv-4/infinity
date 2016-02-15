@@ -639,7 +639,6 @@
 
   var DOMEvent = (function() {
     var eventIsBound = false,
-        scrollScheduled = false,
         resizeTimeout = null,
         boundViews = [];
 
@@ -650,9 +649,9 @@
     // and disallows future scheduling.
 
     function scrollHandler() {
-      if(!scrollScheduled) {
-        setTimeout(scrollAll, config.SCROLL_THROTTLE);
-        scrollScheduled = true;
+      if(!this.scrollScheduled) {
+        setTimeout(scrollAll.bind(this), config.SCROLL_THROTTLE);
+        this.scrollScheduled = true;
       }
     }
 
@@ -664,11 +663,16 @@
     // scheduled.
 
     function scrollAll() {
-      var index, length;
+
+      var index, length,
+          boundViews = $(this).data('infinity-boundviews');
+
       for(index = 0, length = boundViews.length; index < length; index++) {
         updateStartIndex(boundViews[index]);
       }
-      scrollScheduled = false;
+
+      this.scrollScheduled = false;
+
     }
 
 
@@ -710,13 +714,17 @@
         if(!listView.$scrollParent.data('infinity-eventbound')) {
           listView.$scrollParent.on('scroll.infinity', scrollHandler);
           listView.$scrollParent.data('infinity-eventbound', true);
+          listView.$scrollParent.data('infinity-boundviews', []);
         }
 
         if(!eventIsBound) {
           $window.on('resize.infinity', resizeHandler);
           eventIsBound = true;
         }
+
         boundViews.push(listView);
+        listView.$scrollParent.data('infinity-boundviews').push(listView);
+
       },
 
 
