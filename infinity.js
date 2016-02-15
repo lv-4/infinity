@@ -664,10 +664,35 @@
     function scrollAll() {
 
       var index, length,
-          boundViews = $(this).data('infinity-boundviews');
+          $this = $(this),
+          boundViews = $this.data('infinity-boundviews');
 
+      // Update the pages in view
       for(index = 0, length = boundViews.length; index < length; index++) {
         updateStartIndex(boundViews[index]);
+      }
+
+      // Calc current scroll positions
+      if (boundViews[0].landscape) {
+        var currentScrollPositionBegin = $this.scrollLeft(),
+            currentScrollPositionEnd =  currentScrollPositionBegin + $this.width(),
+            targetScrollPositionStart = 0 + 250,
+            targetScrollPositionEnd = this.scrollWidth - 250;
+      } else {
+        var currentScrollPositionBegin = $this.scrollTop(),
+            currentScrollPositionEnd =  currentScrollPositionBegin + $this.height(),
+            targetScrollPositionStart = 0 + 250,
+            targetScrollPositionEnd = this.scrollHeight - 250;
+      }
+
+      // Check for beginReached
+      if (currentScrollPositionBegin <= targetScrollPositionStart) {
+        $this.trigger('infinity.beginReached');
+      }
+
+      // Check for endReached
+      if (targetScrollPositionEnd <= currentScrollPositionEnd) {
+        $this.trigger('infinity.endReached');
       }
 
       this.scrollScheduled = false;
