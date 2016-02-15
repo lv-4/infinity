@@ -67,6 +67,7 @@
   //
   // - `$el`: a jQuery element.
   // - `options`: an optional hash of options
+  //    - `scrollParent`
   //    - `width`
   //    - `height`
   //    - `landscape`
@@ -83,8 +84,6 @@
     this.lazy = !!options.lazy;
     this.lazyFn = options.lazy || null;
     this.landscape = options.landscape || false;
-
-    this.useElementScroll = options.useElementScroll === true;
 
     initBuffer(this);
 
@@ -105,7 +104,7 @@
     this.pages = [];
     this.startIndex = 0;
 
-    this.$scrollParent = this.useElementScroll ? $el : $window;
+    this.$scrollParent = options.scrollParent || $window;
 
     DOMEvent.attach(this);
   }
