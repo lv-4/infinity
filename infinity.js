@@ -707,9 +707,9 @@
       //   event.
 
       attach: function(listView) {
-        if(!listView.eventIsBound) {
+        if(!listView.$scrollParent.data('infinity-eventbound')) {
           listView.$scrollParent.on('scroll.infinity', scrollHandler);
-          listView.eventIsBound = true;
+          listView.$scrollParent.data('infinity-eventbound', true);
         }
 
         if(!eventIsBound) {
@@ -735,9 +735,9 @@
 
       detach: function(listView) {
         var index, length;
-        if(listView.eventIsBound) {
+        if(listView.$scrollParent.data('infinity-eventbound')) {
           listView.$scrollParent.off('scroll.infinity');
-          listView.eventIsBound = false;
+          listView.$scrollParent.data('infinity-eventbound', false);
         }
 
         for(index = 0, length = boundViews.length; index < length; index++) {
