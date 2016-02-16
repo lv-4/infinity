@@ -232,17 +232,7 @@
 
     if (this.landscape) {
         this.width += item.width;
-        var width = this.width;
-        /*
-        // difficulty when the listview height is higher than the row of items: should rows be stacked?
-        // for now, let's assume we only have 1 row
-        var width = this.width,
-            firstPage = pages[this.startIndex];
-        if (firstPage) {
-            width = firstPage.width;
-        }
-        */
-        this.$el.width(width);
+        this.$el.width(this.width);
     } else {
         this.height += item.height;
         this.$el.height(this.height);
