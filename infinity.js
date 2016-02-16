@@ -744,11 +744,16 @@
 
           // Mousewheel scroll: scroll horizontally when scrolling vertically
           if (listView.landscape && config.SCROLL_HORIZONTAL_HIJACK) {
-            listView.$scrollParent.on('mousewheel DOMMouseScroll', function(e) {
+
+            // When window is the scrollParent, listen for events on the body
+            var $elToHijackScrollOn = $.isWindow(listView.$scrollParent.get(0)) ? $('body') : listView.$scrollParent;
+
+            $elToHijackScrollOn.on('mousewheel DOMMouseScroll', function(e) {
               var delta = e.originalEvent.detail || e.originalEvent.wheelDelta;
               this.scrollLeft -= delta;
               e.preventDefault();
             });
+
           }
 
           // Keep track of some things
