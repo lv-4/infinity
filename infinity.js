@@ -85,6 +85,9 @@
     this.landscape = options.landscape || false;
     this.itemSelector = options.itemSelector || '> div';
 
+    this.items = [];
+    this.filteredItems = [];
+
     var initialItems = extractAndRemoveInitialItems(this);
 
     initBuffer(this);
@@ -185,6 +188,21 @@
     }
   }
 
+
+  ListView.prototype.filterItems = function() {
+
+    // @TODO
+    this.filteredItems = this.items;
+
+  }
+
+
+  ListView.prototype.sortFilteredItems = function() {
+
+    // @TODO
+
+  }
+
   // ListView manipulation
   // ---------------------
 
@@ -205,6 +223,12 @@
     var item = convertToItem(this, obj),
         pages = this.pages,
         lastPage = pages[pages.length - 1];
+
+    // Store item on listView for future reference (filtering and sorting)
+    this.items.push(item);
+
+    this.filterItems();
+    this.sortFilteredItems();
 
     if (this.landscape) {
         this.width += item.width;
@@ -254,6 +278,12 @@
         pages = this.pages,
         scrollRef = $.isWindow(this.$scrollParent.get(0)) ? document.body : this.$scrollParent.get(0),
         initialScrollSize;
+
+    // Store item on listView for future reference (filtering and sorting)
+    this.items.splice(0, 0, item);
+
+    this.filterItems();
+    this.sortFilteredItems();
 
     if (this.landscape) {
       initialScrollSize = scrollRef.scrollWidth;
