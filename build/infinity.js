@@ -53,6 +53,7 @@
   config.PAGE_TO_SCREEN_RATIO = 3;
   config.SCROLL_THROTTLE = 350;
   config.SCROLL_HORIZONTAL_HIJACK = true;
+  config.SCROLL_HORIZONTAL_FIXATEPOSITION = false;
 
 
 
@@ -250,12 +251,16 @@
 
     var firstPage,
         item = convertToItem(this, obj, true),
-        pages = this.pages;
+        pages = this.pages,
+        scrollRef = $.isWindow(this.$scrollParent.get(0)) ? document.body : this.$scrollParent.get(0),
+        initialScrollSize;
 
     if (this.landscape) {
+      initialScrollSize = scrollRef.scrollWidth;
       this.width += item.width;
       this.$el.width(this.width);
     } else {
+      initialScrollSize = scrollRef.scrollHeight;
       this.height += item.height;
       this.$el.height(this.height);
     }
@@ -272,6 +277,19 @@
 
     firstPage.prepend(item);
     updateStartIndex(this, true);
+
+    // Restore scroll position (not 100% glitchfree, disabled by default)
+    if (config.SCROLL_HORIZONTAL_FIXATEPOSITION) {
+      if (this.landscape) {
+        if (initialScrollSize != scrollRef.scrollWidth) {
+          $(scrollRef).scrollLeft(($(scrollRef).scrollLeft() + scrollRef.scrollWidth - initialScrollSize));
+        }
+      } else {
+        if (initialScrollSize != scrollRef.scrollHeight) {
+          $(scrollRef).scrollTop(($(scrollRef).scrollTop() + scrollRef.scrollHeight - initialScrollSize));
+        }
+      }
+    }
 
     return item;
   };
