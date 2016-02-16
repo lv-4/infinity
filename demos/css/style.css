@@ -113,6 +113,9 @@
 
 	.vertical {
 		width: 820px;
+	}
+
+	.vertical.demo--overflow {
 		height: 80%;
 		margin: 7% auto;
 		overflow-y: scroll;
@@ -143,6 +146,9 @@
 
 	.horizontal {
 		height: 820px;
+	}
+
+	.horizontal.demo--overflow {
 		width: 80%;
 		margin: 0 auto;
 		overflow-x: scroll;
