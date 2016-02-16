@@ -268,7 +268,7 @@
       pages.splice(0, 0, firstPage);
     }
 
-    updatePagePosition(pages, item.height, 1);
+    updatePagePosition(pages, (this.landscape ? item.width : item.height), 1);
 
     firstPage.prepend(item);
     updateStartIndex(this, true);
@@ -292,8 +292,8 @@
         page;
     for ( i = offset || 0; i < length; i++ ) {
       page = pages[i];
-      page.top += positionChange;
-      page.bottom += positionChange;
+      page.begin += positionChange;
+      page.end += positionChange;
       // loop through all page items and update the top/bottom values
       updateItemPosition(page.items, positionChange);
     }
@@ -315,8 +315,8 @@
         item;
     for ( i = offset || 0; i < length; i++ ) {
       item = items[i];
-      item.top += positionChange;
-      item.bottom += positionChange;
+      item.begin += positionChange;
+      item.end += positionChange;
     }
   };
 
@@ -578,7 +578,7 @@
   function startIndexWithinRange(listView, start, end) {
     var index = indexWithinRange(listView, start, end);
     index = Math.max(index - NUM_BUFFER_PAGES, 0);
-    index = Math.min(index, listView.pages.length);
+    index = Math.min(index, listView.pages.length); // @TODO? https://github.com/airbnb/infinity/pull/33
     return index;
   }
 
@@ -944,14 +944,9 @@
   Page.prototype.hasVacancy = function() {
     var viewRef = this.parent.$scrollParent;
     if (this.parent.landscape) {
-      if (this.parent.height === 0) {
-        return this.width < $window.width() * config.PAGE_TO_SCREEN_RATIO;
-      } else {
-        // 1 row
-        return true;
-      }
+      return this.width < viewRef.width() * config.PAGE_TO_SCREEN_RATIO;
     } else {
-      return this.height < $window.height() * config.PAGE_TO_SCREEN_RATIO;
+      return this.height < viewRef.height() * config.PAGE_TO_SCREEN_RATIO;
     }
   };
 
