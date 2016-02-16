@@ -292,8 +292,8 @@
         page;
     for ( i = offset || 0; i < length; i++ ) {
       page = pages[i];
-      page.top += positionChange;
-      page.bottom += positionChange;
+      page.begin += positionChange;
+      page.end += positionChange;
       // loop through all page items and update the top/bottom values
       updateItemPosition(page.items, positionChange);
     }
@@ -315,8 +315,8 @@
         item;
     for ( i = offset || 0; i < length; i++ ) {
       item = items[i];
-      item.top += positionChange;
-      item.bottom += positionChange;
+      item.begin += positionChange;
+      item.end += positionChange;
     }
   };
 
