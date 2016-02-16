@@ -84,6 +84,10 @@
     this.lazyFn = options.lazy || null;
     this.landscape = options.landscape || false;
     this.itemSelector = options.itemSelector || '> div';
+    this.filter = options.filter || false;
+
+    this.items = [];
+    this.filteredItems = [];
 
     var initialItems = extractAndRemoveInitialItems(this);
 
@@ -185,6 +189,80 @@
     }
   }
 
+  var _itemSurvivesFilter = function(item, filter) {
+
+    if (!filter) return true;
+
+    return item.$el.is(filter);
+
+  }
+
+
+  ListView.prototype.filterItems = function(filter) {
+
+    var listView = this,
+        scrollRef = $.isWindow(listView.$scrollParent.get(0)) ? document.body : listView.$scrollParent.get(0)
+
+    // Store new filter
+    listView.filter = filter
+
+    // As we'll be re-rendering items from scratch we need to reset the size of the ListView and its buffer to 0
+    if (listView.landscape) {
+      listView.width = 0;
+      listView._$buffer.width(0);
+    } else {
+      listView.height = 0;
+      listView._$buffer.height(0);
+    }
+
+    // Now, build the new filteredItems array
+    var filteredItems = [];
+    $.each(listView.items, function(i, item) {
+      if (_itemSurvivesFilter(item, filter)) {
+
+        // Manipulate position of item
+        if (listView.landscape) {
+          item.begin = listView.width;
+          item.end = item.begin + item.width;
+        } else {
+          item.begin = listView.height;
+          item.end = item.begin + item.height;
+        }
+
+        // Adjust size of ListView itself (so that next item aligns up correctly)
+        if (listView.landscape) {
+          listView.width += item.width;
+        } else {
+          listView.height += item.height;
+        }
+
+        filteredItems.push(item);
+      }
+    });
+    listView.filteredItems = filteredItems;
+
+    // Adjust size of ListView element
+    if (listView.landscape) {
+      listView.$el.width(listView.width);
+      scrollRef.scrollLeft = 0;
+    } else {
+      listView.$el.height(listView.height);
+      scrollRef.scrollTop = 0;
+    }
+
+    // Now that we've filtered our new set of items, repartition
+    repartition(listView);
+
+  }
+
+
+  ListView.prototype.sortFilteredItems = function() {
+
+    // @TODO
+    console.log('sortFilteredItems');
+
+  }
+
   // ListView manipulation
   // ---------------------
 
@@ -206,31 +284,37 @@
         pages = this.pages,
         lastPage = pages[pages.length - 1];
 
-    if (this.landscape) {
-        this.width += item.width;
-        var width = this.width;
-        /*
-        // difficulty when the listview height is higher than the row of items: should rows be stacked?
-        // for now, let's assume we only have 1 row
-        var width = this.width,
-            firstPage = pages[this.startIndex];
-        if (firstPage) {
-            width = firstPage.width;
-        }
-        */
-        this.$el.width(width);
-    } else {
-        this.height += item.height;
-        this.$el.height(this.height);
-    }
+    // Store item on listView for future reference (filtering and sorting)
+    this.items.push(item);
 
-    if(!lastPage || !lastPage.hasVacancy()) {
-      lastPage = new Page(this);
-      pages.push(lastPage);
-    }
+    // Item passes the filter: we also need to visually add it
+    if (_itemSurvivesFilter(item, this.filter)) {
 
-    lastPage.append(item);
-    insertPagesInView(this);
+      // Store it
+      this.filteredItems.push(item);
+
+      // Manipulate ListView properties
+      if (this.landscape) {
+          this.width += item.width;
+          this.$el.width(this.width);
+      } else {
+          this.height += item.height;
+          this.$el.height(this.height);
+      }
+
+      // Create a new lastPage if needed
+      if(!lastPage || !lastPage.hasVacancy()) {
+        lastPage = new Page(this);
+        pages.push(lastPage);
+      }
+
+      // Append item to the lastPage
+      lastPage.append(item);
+
+      // insert pages in view
+      insertPagesInView(this);
+
+    }
 
     return item;
   };
@@ -255,40 +339,58 @@
         scrollRef = $.isWindow(this.$scrollParent.get(0)) ? document.body : this.$scrollParent.get(0),
         initialScrollSize;
 
-    if (this.landscape) {
-      initialScrollSize = scrollRef.scrollWidth;
-      this.width += item.width;
-      this.$el.width(this.width);
-    } else {
-      initialScrollSize = scrollRef.scrollHeight;
-      this.height += item.height;
-      this.$el.height(this.height);
-    }
+    // Store item on listView for future reference (filtering and sorting)
+    this.items.splice(0, 0, item);
 
-    firstPage = pages[0];
+    // Item passes the filter: we also need to visually add it
+    if (_itemSurvivesFilter(item, this.filter)) {
 
-    if(!firstPage || !firstPage.hasVacancy()) {
-      firstPage = new Page(this);
-      this.startIndex++;
-      pages.splice(0, 0, firstPage);
-    }
+      // Store it
+      this.filteredItems.splice(0, 0, item);
 
-    updatePagePosition(pages, (this.landscape ? item.width : item.height), 1);
-
-    firstPage.prepend(item);
-    updateStartIndex(this, true);
-
-    // Restore scroll position (not 100% glitchfree, disabled by default)
-    if (config.SCROLL_HORIZONTAL_FIXATEPOSITION) {
+      // Manipulate ListView properties
       if (this.landscape) {
-        if (initialScrollSize != scrollRef.scrollWidth) {
-          $(scrollRef).scrollLeft(($(scrollRef).scrollLeft() + scrollRef.scrollWidth - initialScrollSize));
-        }
+        initialScrollSize = scrollRef.scrollWidth;
+        this.width += item.width;
+        this.$el.width(this.width);
       } else {
-        if (initialScrollSize != scrollRef.scrollHeight) {
-          $(scrollRef).scrollTop(($(scrollRef).scrollTop() + scrollRef.scrollHeight - initialScrollSize));
+        initialScrollSize = scrollRef.scrollHeight;
+        this.height += item.height;
+        this.$el.height(this.height);
+      }
+
+      // Get references to the first page
+      firstPage = pages[0];
+
+      // Create a new firstPage if needed
+      if(!firstPage || !firstPage.hasVacancy()) {
+        firstPage = new Page(this);
+        this.startIndex++;
+        pages.splice(0, 0, firstPage);
+      }
+
+      // update each page its position with the size of the soon to be inserted item
+      updatePagePosition(pages, (this.landscape ? item.width : item.height), 1);
+
+      // Insert it
+      firstPage.prepend(item);
+
+      // Update the start index
+      updateStartIndex(this, true);
+
+      // Restore scroll position (not 100% glitchfree, disabled by default)
+      if (config.SCROLL_HORIZONTAL_FIXATEPOSITION) {
+        if (this.landscape) {
+          if (initialScrollSize != scrollRef.scrollWidth) {
+            $(scrollRef).scrollLeft(($(scrollRef).scrollLeft() + scrollRef.scrollWidth - initialScrollSize));
+          }
+        } else {
+          if (initialScrollSize != scrollRef.scrollHeight) {
+            $(scrollRef).scrollTop(($(scrollRef).scrollTop() + scrollRef.scrollHeight - initialScrollSize));
+          }
         }
       }
+
     }
 
     return item;
@@ -454,6 +556,20 @@
     this.cleanup();
   };
 
+  ListView.prototype.setPages = function(pages) {
+
+    // Delete all previous pages
+    if (this.pages.length > 1) {
+      for (var i = this.pages.length - 1; i >= 0; i--) {
+        this.pages[i].remove();
+      }
+    }
+
+    // Set new pages
+    this.pages = pages;
+
+  }
+
 
   // ### convertToItem
   //
@@ -494,32 +610,27 @@
   // the array, or recalculating everything on screen resize.
 
   function repartition(listView) {
-    var currPage, newPage, index, length, itemIndex, pageLength, currItems, currItem,
+    var newPage, index, length, itemIndex, numItems, currItems, currItem,
         nextItem,
-        pages = listView.pages,
-        newPages = [];
+        newPages = [],
+        filteredItems = listView.filteredItems;
 
     newPage = new Page(listView);
     newPages.push(newPage);
 
-    for(index = 0, length = pages.length; index < length; index++) {
-      currPage = pages[index];
-      currItems = currPage.items;
-      for(itemIndex = 0, pageLength = currItems.length; itemIndex < pageLength; itemIndex++) {
-        currItem = currItems[itemIndex];
-        nextItem = currItem.clone();
-        if(newPage.hasVacancy()) {
-          newPage.append(nextItem);
-        } else {
-          newPage = new Page(listView);
-          newPages.push(newPage);
-          newPage.append(nextItem);
-        }
+    for(itemIndex = 0, numItems = filteredItems.length; itemIndex < numItems; itemIndex++) {
+      currItem = filteredItems[itemIndex];
+      nextItem = currItem.clone();
+      if(newPage.hasVacancy()) {
+        newPage.append(nextItem);
+      } else {
+        newPage = new Page(listView);
+        newPages.push(newPage);
+        newPage.append(nextItem);
       }
-      currPage.remove();
     }
 
-    listView.pages = newPages;
+    listView.setPages(newPages);
     insertPagesInView(listView);
   }
 
