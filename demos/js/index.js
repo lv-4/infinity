@@ -116,6 +116,15 @@ jQuery(function() {
 			loadMoreData($scrollParent, 'append');
 		});
 
+		// Prepend an item to a random wrapper on a given interval
+		// window.randomInserter = setInterval(function() {
+		// 	loadMoreData($scrollParent, 'prepend', 1);
+		// }, 100);
+
+		// setTimeout(function() {
+		// 	clearInterval(window.randomInserter);
+		// }, 5000)
+
 	});
 
 });
