@@ -5,7 +5,7 @@ jQuery(function() {
 	infinity.config.SCROLL_THROTTLE = 100;
 
 	// Array which will hold dummy items to append when the bottom is reached. This list will be built based upon the data already present in the HTML
-	var dummyItems = [];
+	var dummyItems = $('.infinity-item');
 
 	// Variable to indicate if we are loading extra data. This way we prevent double loads
 	var isLoading = false;
@@ -85,27 +85,17 @@ jQuery(function() {
 			// Get reference to the column
 			var $column = $(this);
 
-			// Get all items contained in the column (rendered by the server) and remove them as ListView wasn't built to work with pre-defined content. We will re-inject the items one by one after we've inited the ListView.
-			var items = $column.find('.infinity-item');
-			$column.empty()
-
 			// Initialize Infinity
 			var listView = new infinity.ListView($column, {
 				landscape: $scrollParent.hasClass('horizontal'),
 				scrollParent: $actualScrollParent,
+				itemSelector: '.infinity-item',
 				lazy: function() {
 					$(this).find('img').each(function() {
 						var $img = $(this);
 						$img.attr('src', $img.attr('data-original'));
 					});
 				}
-			});
-
-			// Reappend the data (and store it in the dummy data for future use)
-			items.each(function() {
-				$item = $(this);
-				listView.append($item.clone());
-				dummyItems.push($item);
 			});
 
 			// Store the created listView for future reference
