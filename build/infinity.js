@@ -677,12 +677,12 @@
         var currentScrollPositionBegin = $this.scrollLeft(),
             currentScrollPositionEnd =  currentScrollPositionBegin + $this.width(),
             targetScrollPositionStart = 0 + 250,
-            targetScrollPositionEnd = this.scrollWidth - 250;
+            targetScrollPositionEnd = ($.isWindow($this.get(0)) ? document.body.scrollWidth : this.scrollWidth) - 250;
       } else {
         var currentScrollPositionBegin = $this.scrollTop(),
             currentScrollPositionEnd =  currentScrollPositionBegin + $this.height(),
             targetScrollPositionStart = 0 + 250,
-            targetScrollPositionEnd = this.scrollHeight - 250;
+            targetScrollPositionEnd = ($.isWindow($this.get(0)) ? document.body.scrollHeight : this.scrollHeight) - 250;
       }
 
       // Check for beginReached
@@ -744,11 +744,16 @@
 
           // Mousewheel scroll: scroll horizontally when scrolling vertically
           if (listView.landscape && config.SCROLL_HORIZONTAL_HIJACK) {
-            listView.$scrollParent.on('mousewheel DOMMouseScroll', function(e) {
+
+            // When window is the scrollParent, listen for events on the body
+            var $elToHijackScrollOn = $.isWindow(listView.$scrollParent.get(0)) ? $('body') : listView.$scrollParent;
+
+            $elToHijackScrollOn.on('mousewheel DOMMouseScroll', function(e) {
               var delta = e.originalEvent.detail || e.originalEvent.wheelDelta;
               this.scrollLeft -= delta;
               e.preventDefault();
             });
+
           }
 
           // Keep track of some things
