@@ -578,7 +578,7 @@
   function startIndexWithinRange(listView, start, end) {
     var index = indexWithinRange(listView, start, end);
     index = Math.max(index - NUM_BUFFER_PAGES, 0);
-    index = Math.min(index, listView.pages.length);
+    index = Math.min(index, listView.pages.length); // @TODO? https://github.com/airbnb/infinity/pull/33
     return index;
   }
 
