@@ -79,6 +79,9 @@ jQuery(function() {
 
 		$scrollParent.find('.infinity-wrapper').each(function() {
 
+			// If we're not scrolling inside an overflowing element we need to listen for scroll events on $(window), not the element itself.
+			$actualScrollParent = $scrollParent.hasClass('demo--overflow') ? $scrollParent : $(window);
+
 			// Get reference to the column
 			var $column = $(this);
 
@@ -89,7 +92,7 @@ jQuery(function() {
 			// Initialize Infinity
 			var listView = new infinity.ListView($column, {
 				landscape: $scrollParent.hasClass('horizontal'),
-				scrollParent: $scrollParent,
+				scrollParent: $actualScrollParent,
 				lazy: function() {
 					$(this).find('img').each(function() {
 						var $img = $(this);
@@ -110,12 +113,12 @@ jQuery(function() {
 
 		});
 
-		// $scrollParent.on('infinity.beginReached', function() {
+		// $actualScrollParent.on('infinity.beginReached', function() {
 		// 	if (isLoading) return;
 		// 	loadMoreData($scrollParent, 'prepend');
 		// });
 
-		$scrollParent.on('infinity.endReached', function() {
+		$actualScrollParent.on('infinity.endReached', function() {
 			if (isLoading) return;
 			loadMoreData($scrollParent, 'append');
 		});

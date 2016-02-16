@@ -677,12 +677,12 @@
         var currentScrollPositionBegin = $this.scrollLeft(),
             currentScrollPositionEnd =  currentScrollPositionBegin + $this.width(),
             targetScrollPositionStart = 0 + 250,
-            targetScrollPositionEnd = this.scrollWidth - 250;
+            targetScrollPositionEnd = ($.isWindow($this.get(0)) ? document.body.scrollWidth : this.scrollWidth) - 250;
       } else {
         var currentScrollPositionBegin = $this.scrollTop(),
             currentScrollPositionEnd =  currentScrollPositionBegin + $this.height(),
             targetScrollPositionStart = 0 + 250,
-            targetScrollPositionEnd = this.scrollHeight - 250;
+            targetScrollPositionEnd = ($.isWindow($this.get(0)) ? document.body.scrollHeight : this.scrollHeight) - 250;
       }
 
       // Check for beginReached
