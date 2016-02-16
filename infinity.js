@@ -268,7 +268,7 @@
       pages.splice(0, 0, firstPage);
     }
 
-    updatePagePosition(pages, item.height, 1);
+    updatePagePosition(pages, (this.landscape ? item.width : item.height), 1);
 
     firstPage.prepend(item);
     updateStartIndex(this, true);
