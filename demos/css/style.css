@@ -149,6 +149,7 @@
 	}
 
 	.vertical .infinity-item {
+		width: 400px;
 		margin-bottom: 10px;	/* add some whitespace to the bottom, to create a gutter between the .infinity-items */
 	}
 
