@@ -944,14 +944,9 @@
   Page.prototype.hasVacancy = function() {
     var viewRef = this.parent.$scrollParent;
     if (this.parent.landscape) {
-      if (this.parent.height === 0) {
-        return this.width < $window.width() * config.PAGE_TO_SCREEN_RATIO;
-      } else {
-        // 1 row
-        return true;
-      }
+      return this.width < viewRef.width() * config.PAGE_TO_SCREEN_RATIO;
     } else {
-      return this.height < $window.height() * config.PAGE_TO_SCREEN_RATIO;
+      return this.height < viewRef.height() * config.PAGE_TO_SCREEN_RATIO;
     }
   };
 
