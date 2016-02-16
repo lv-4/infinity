@@ -127,4 +127,12 @@ jQuery(function() {
 
 	});
 
+	// Filtering
+	$('[name="filter"]').on('change', function(e) {
+		var filter = $(this).val();
+		$('.infinity-wrapper').each(function() {
+			$(this).data('listView').filterItems(filter);
+		});
+	});
+
 });
