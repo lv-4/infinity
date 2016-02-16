@@ -11,12 +11,15 @@ jQuery(function() {
 	var isLoading = false;
 
 	// Logic to load in more data
-	var loadMoreData = function($scrollParent, where) {
+	var loadMoreData = function($scrollParent, where, numItems) {
 
 		console.log('moredata.loading');
 
 		// Mark as loading
 		isLoading = true;
+
+		// Default numItems to 20
+		if (!numItems) numItems = 20;
 
 		// In a normal scenario you would query an API of some sorts for more data. Here we totally fake it.
 		setTimeout(function() {
@@ -25,7 +28,7 @@ jQuery(function() {
 
 			// Get 20 random items
 			// @ref https://css-tricks.com/snippets/javascript/shuffle-array/
-			var randomItems = dummyItems.sort(function() { return 0.5 - Math.random() }).slice(0,20);
+			var randomItems = dummyItems.sort(function() { return 0.5 - Math.random() }).slice(0, numItems);
 
 			// Get the columns inside the $scrollParent
 			var $columns = $scrollParent.find('.infinity-wrapper');
