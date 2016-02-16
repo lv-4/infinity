@@ -484,6 +484,20 @@
     this.cleanup();
   };
 
+  ListView.prototype.setPages = function(pages) {
+
+    // Delete all previous pages
+    if (this.pages.length > 1) {
+      for (var i = this.pages.length - 1; i >= 0; i--) {
+        this.pages[i].remove();
+      }
+    }
+
+    // Set new pages
+    this.pages = pages;
+
+  }
+
 
   // ### convertToItem
   //
@@ -544,7 +558,7 @@
       }
     }
 
-    listView.pages = newPages;
+    listView.setPages(newPages);
     insertPagesInView(listView);
   }
 
