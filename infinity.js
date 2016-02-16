@@ -86,7 +86,7 @@
     initBuffer(this);
 
     if (this.landscape) {
-        this.begin = this.$el.offset().left;    
+        this.begin = this.$el.offset().left;
     } else {
         this.begin = this.$el.offset().top;
     }
