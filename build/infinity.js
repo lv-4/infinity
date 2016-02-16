@@ -82,11 +82,14 @@
     this.lazy = !!options.lazy;
     this.lazyFn = options.lazy || null;
     this.landscape = options.landscape || false;
+    this.itemSelector = options.itemSelector || '> div';
+
+    var initialItems = extractAndRemoveInitialItems(this);
 
     initBuffer(this);
 
     if (this.landscape) {
-        this.begin = this.$el.offset().left;    
+        this.begin = this.$el.offset().left;
     } else {
         this.begin = this.$el.offset().top;
     }
@@ -104,7 +107,43 @@
 
     this.$scrollParent = options.scrollParent || $window;
 
+    reappendInitialItems(this, initialItems);
+
     DOMEvent.attach(this);
+
+  }
+
+
+  // ### extractAndRemoveInitialItems
+  //
+  // Private ListView method. Finds the initial items contained in a listView based upon its itemSelector and then empties the listView so that it can further initialize.
+  // These items will later on be reappended again.
+
+  function extractAndRemoveInitialItems(listView) {
+
+    // Find all items in the element
+    var items = listView.$el.find(listView.itemSelector);
+
+    // Empty the element
+    listView.$el.empty()
+
+    // Return the items
+    return items;
+
+  }
+
+
+  // ### reappendInitialItems
+  //
+  // Private ListView method. Appends a given array of items to a given listView
+
+  function reappendInitialItems(listView, items) {
+
+    // Loop all items and add 'm one by one
+    items.each(function() {
+      listView.append($(this));
+    });
+
   }
 
 
