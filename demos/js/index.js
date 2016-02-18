@@ -104,6 +104,11 @@ jQuery(function() {
 			// Store the created listView for future reference
 			$column.data('listView', listView);
 
+			// filter callback
+			$column.on('infinity.filterComplete', function(e, d) {
+				console.log(d);
+			});
+
 		});
 
 		// $actualScrollParent.on('infinity.beginReached', function() {

@@ -253,6 +253,11 @@
     // Now that we've filtered our new set of items, repartition
     repartition(listView);
 
+    // Trigger filtered event
+    listView.$el.trigger('infinity.filterComplete', {
+      filteredItems: listView.filteredItems
+    });
+
   }
 
 
