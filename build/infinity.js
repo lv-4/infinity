@@ -201,7 +201,7 @@
   ListView.prototype.filterItems = function(filter) {
 
     var listView = this,
-        scrollRef = $.isWindow(listView.$scrollParent.get(0)) ? document.body : listView.$scrollParent.get(0)
+        $scrollRef = $.isWindow(listView.$scrollParent.get(0)) ? $('body') : listView.$scrollParent;
 
     // Store new filter
     listView.filter = filter
@@ -244,14 +244,19 @@
     // Adjust size of ListView element
     if (listView.landscape) {
       listView.$el.width(listView.width);
-      scrollRef.scrollLeft = 0;
+      $scrollRef.animate({ scrollLeft: 0 });
     } else {
       listView.$el.height(listView.height);
-      scrollRef.scrollTop = 0;
+      $scrollRef.animate({ scrollTop: 0 });
     }
 
     // Now that we've filtered our new set of items, repartition
     repartition(listView);
+
+    // Trigger filtered event
+    listView.$el.trigger('infinity.filterComplete', {
+      filteredItems: listView.filteredItems
+    });
 
   }
 
@@ -1260,6 +1265,7 @@
   ListItem.prototype.remove = function() {
     this.$el.remove();
     removeItemFromPage(this, this.parent);
+    // @TODO: Also delete it from the listView
     this.cleanup();
   };
 
