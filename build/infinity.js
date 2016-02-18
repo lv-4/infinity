@@ -564,7 +564,7 @@
   ListView.prototype.setPages = function(pages) {
 
     // Delete all previous pages
-    if (this.pages.length > 1) {
+    if (this.pages.length > 0) {
       for (var i = this.pages.length - 1; i >= 0; i--) {
         this.pages[i].remove();
       }
