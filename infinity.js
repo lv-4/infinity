@@ -268,6 +268,10 @@
 
   }
 
+  ListView.prototype.reset = function() {
+    this.setItems();
+  }
+
   ListView.prototype.setItems = function(items) {
     this.items = (!items) ? [] : items;
     this.filterItems(this.filter)
