@@ -1260,6 +1260,7 @@
   ListItem.prototype.remove = function() {
     this.$el.remove();
     removeItemFromPage(this, this.parent);
+    // @TODO: Also delete it from the listView
     this.cleanup();
   };
 
