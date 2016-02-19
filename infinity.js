@@ -73,6 +73,7 @@
   //    - `width`
   //    - `height`
   //    - `landscape`
+  //    - `itemSizer`
 
   function ListView($el, options) {
     options = options || {};
@@ -85,6 +86,11 @@
     this.landscape = options.landscape || false;
     this.itemSelector = options.itemSelector || '> div';
     this.filter = options.filter || false;
+
+    // The itemSizer is a function used to get the size of a ListItem
+    // By using the itemSizer we bypass injecting and detaching the element into/from the DOM
+    // to define its size. This will of course only work if ListItems have fixed sizes.
+    this.itemSizer = options.itemSizer || null;
 
     this.items = [];
     this.filteredItems = [];
@@ -464,18 +470,53 @@
   // - `listItem`: the ListItem whose coordinates you want to cache.
 
   function cacheCoordsFor(listView, listItem, prepend) {
-    listItem.$el.detach();
 
-    // WARNING: this will always break for prepends. Once support gets added for
-    // prepends, change this.
-    if ( prepend ) {
-      listView.$el.prepend(listItem.$el);
+    var elDimensions;
+
+    // We have an itemSizer function? Use that to define the element dimensions
+    if (listView.itemSizer) {
+      elDimensions = listView.itemSizer(listItem.$el);
     }
+
+    // Dimensions found, set 'm
+    if (elDimensions) {
+      listItem.width = elDimensions.width;
+      listItem.height = elDimensions.height;
+    }
+
+    // No dimensions found or no itemSizer? Inject listItem into DOM and use jQuery to define its dimensions
     else {
-      listView.$el.append(listItem.$el);
+
+      listItem.$el.detach();
+
+      if (prepend) {
+        listView.$el.prepend(listItem.$el);
+      } else {
+        listView.$el.append(listItem.$el);
+      }
+
+      if (listView.landscape) {
+        listItem.width = listItem.$el.outerWidth(true);
+        listItem.height = listItem.$el.height();
+      } else {
+        listItem.height = listItem.$el.outerHeight(true);
+        listItem.width = listItem.$el.width();
+      }
+
+      listItem.$el.detach();
+
     }
-    updateCoords(listItem, prepend ? 0 : listView);
-    listItem.$el.detach();
+
+    // Now that we have the width/height, we can also define the begin and end coordinates
+    if (listView.landscape) {
+      listItem.begin = prepend ? 0 : listView.width;
+      listItem.end = listItem.begin + listItem.width;
+    } else {
+      listItem.begin = prepend ? 0 : listView.height;
+      listItem.end = listItem.begin + listItem.height;
+    }
+
+
   }
 
 
@@ -1286,33 +1327,6 @@
   ListItem.prototype.cleanup = function() {
     this.parent = null;
   };
-
-
-  // ### updateCoords
-  //
-  // Updates the coordinates of the given ListItem, assuming a given y-offset
-  // from the parent ListView.
-  //
-  // Takes:
-  //
-  //  - `listItem`: the ListItem whose cached coordinates you want to update.
-  //  - `listView`: the ListView
-
-  function updateCoords(listItem, listView) {
-    var $el = listItem.$el;
-
-    if (listView.landscape) {
-      listItem.begin = (listView !== 0) ? listView.width : 0;
-      listItem.width = $el.outerWidth(true);
-      listItem.end = listItem.begin + listItem.width;
-      listItem.height = $el.height();
-    } else {
-      listItem.begin = (listView !== 0) ? listView.height : 0;
-      listItem.height = $el.outerHeight(true);
-      listItem.end = listItem.begin + listItem.height;
-      listItem.width = $el.width();
-    }
-  }
 
 
 
