@@ -471,11 +471,12 @@
 
   function cacheCoordsFor(listView, listItem, prepend) {
 
-    var elDimensions;
+    var elDimensions,
+        $listItemEl = listItem.$el;
 
     // We have an itemSizer function? Use that to define the element dimensions
     if (listView.itemSizer) {
-      elDimensions = listView.itemSizer(listItem.$el);
+      elDimensions = listView.itemSizer($listItemEl);
     }
 
     // Dimensions found, set 'm
@@ -487,23 +488,23 @@
     // No dimensions found or no itemSizer? Inject listItem into DOM and use jQuery to define its dimensions
     else {
 
-      listItem.$el.detach();
+      $listItemEl.detach();
 
       if (prepend) {
-        listView.$el.prepend(listItem.$el);
+        listView.$el.prepend($listItemEl);
       } else {
-        listView.$el.append(listItem.$el);
+        listView.$el.append($listItemEl);
       }
 
       if (listView.landscape) {
-        listItem.width = listItem.$el.outerWidth(true);
-        listItem.height = listItem.$el.height();
+        listItem.width = $listItemEl.outerWidth(true);
+        listItem.height = $listItemEl.height();
       } else {
-        listItem.height = listItem.$el.outerHeight(true);
-        listItem.width = listItem.$el.width();
+        listItem.height = $listItemEl.outerHeight(true);
+        listItem.width = $listItemEl.width();
       }
 
-      listItem.$el.detach();
+      $listItemEl.detach();
 
     }
 
@@ -515,6 +516,13 @@
       listItem.begin = prepend ? 0 : listView.height;
       listItem.end = listItem.begin + listItem.height;
     }
+
+    // Store all properties as data-attributes on the element
+    $listItemEl
+      .attr('data-infinity-begin', listItem.begin)
+      .attr('data-infinity-end', listItem.end)
+      .attr('data-infinity-width', listItem.width)
+      .attr('data-infinity-height', listItem.height);
 
 
   }
