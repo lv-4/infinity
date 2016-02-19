@@ -75,6 +75,47 @@ jQuery(function() {
 		}, 1500);
 	}
 
+	// As this demo sports both vertical and horizontal we use this intermediary function to
+	// define the actual itemSizer. The itemSizer is then used to get the size of the listItems.
+	// By using the itemSizer we bypass injecting and detaching the element into/from the DOM
+	// to define its size. This will of course only work if ListItems have fixed sizes.
+	var defineItemSizer = function($scrollParent) {
+		if ($scrollParent.hasClass('horizontal')) {
+			return function($item) {
+				if ($item.hasClass('infinity-item--big')) {
+					return {
+						'width': 400,
+						'height': 400
+					}
+				}
+				if ($item.hasClass('infinity-item--small')) {
+					return {
+						'width': 195,
+						'height': 400
+					}
+				}
+				return false;
+			}
+		} else {
+			return function($item) {
+				if ($item.hasClass('infinity-item--big')) {
+					return {
+						'width': 400,
+						'height': 400
+					}
+				}
+				if ($item.hasClass('infinity-item--small')) {
+					return {
+						'width': 400,
+						'height': 195
+					}
+				}
+				return false;
+			}
+
+		}
+	}
+
 	// Apply Infinity on all columns
 	$('.demo').each(function() {
 
@@ -93,6 +134,7 @@ jQuery(function() {
 				landscape: $scrollParent.hasClass('horizontal'),
 				scrollParent: $actualScrollParent,
 				itemSelector: '.infinity-item',
+				itemSizer: defineItemSizer($scrollParent),
 				lazy: function() {
 					$(this).find('img').each(function() {
 						var $img = $(this);
