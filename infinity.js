@@ -100,10 +100,11 @@
     initBuffer(this);
 
     if (this.landscape) {
-        this.begin = this.$el.offset().left;
+        this.begin = this.$el.parent().offset().left;
     } else {
-        this.begin = this.$el.offset().top;
+        this.begin = this.$el.parent().offset().top;
     }
+    // console.log("Initialized listView with begin = %d (landscape = %s)", this.begin, (this.landscape ? 'true' : 'false'));
     this.width = options.width || 0;
     this.height = options.height || 0;
 
