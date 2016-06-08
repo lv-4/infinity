@@ -224,7 +224,7 @@
       listView._$buffer.height(0);
     }
 
-    // Now, build the new filteredItems array
+    // Do loop all items (even if the filter is blank) to make sure all positions are updated!
     var filteredItems = [];
     $.each(listView.items, function(i, item) {
       if (_itemSurvivesFilter(item, filter)) {
@@ -244,6 +244,14 @@
         } else {
           listView.height += item.height;
         }
+
+        // Store all properties as data-attributes on the element
+        var $listItemEl = item.$el;
+        $listItemEl
+          .attr('data-infinity-begin', item.begin)
+          .attr('data-infinity-end', item.end)
+          .attr('data-infinity-width', item.width)
+          .attr('data-infinity-height', item.height);
 
         filteredItems.push(item);
       }
