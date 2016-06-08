@@ -83,6 +83,9 @@
 
     this.lazy = !!options.lazy;
     this.lazyFn = options.lazy || null;
+
+    this.pageLazy = !!options.pageLazy;
+    this.pageLazyFn = options.pageLazy || null;
     this.landscape = options.landscape || false;
     this.itemSelector = options.itemSelector || '> div';
     this.filter = options.filter || '*';
@@ -646,7 +649,7 @@
 
     for(index; index < length; index++) {
       curr = pages[index];
-      if(listView.lazy) curr.lazyload(listView.lazyFn);
+      if(listView.lazy || listView.pageLazy) curr.lazyload(listView.lazyFn, listView.pageLazyFn);
       if(inserted && curr.onscreen) inOrder = false;
 
       if(!inOrder) {
@@ -1320,14 +1323,27 @@
   // - `callback`: a function of the form `function([$el]){}`. Will run on
   // each unloaded element, and will use the element as its calling context.
 
-  Page.prototype.lazyload = function(callback) {
+  Page.prototype.lazyload = function(itemCallback, pageCallback) {
+
     var $el = this.$el,
         index, length;
+
     if (!this.lazyloaded) {
-      for (index = 0, length = $el.length; index < length; index++) {
-        callback.call($el[index], $el[index]);
+
+      // Perform a callback on each item
+      if (itemCallback) {
+        for (index = 0, length = $el.length; index < length; index++) {
+          itemCallback.call($el[index], $el[index]);
+        }
       }
+
+      // Perform a callback on the page itself
+      if (pageCallback) {
+        pageCallback.call($el)
+      }
+
       this.lazyloaded = true;
+
     }
   };
 
