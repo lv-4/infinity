@@ -286,7 +286,32 @@
   }
 
   ListView.prototype.reset = function() {
-    this.setItems();
+
+    // Clear the items
+    this.items = [];
+    this.filteredItems = [];
+
+    // Reset the filter
+    this.filter = '*';
+
+    // Clear the pages
+    this.startIndex = 0;
+    for (var page in this.pages) {
+      PageRegistry.remove(this.pages[page]);
+    }
+    this.pages = [];
+
+    // Clear the width
+    this.width = 0;
+    this.height = 0;
+
+    // empty the listView DOM
+    this.$el.empty()
+
+    // Reinsert buffer or things will go wrong!
+    updateBuffer(this);
+    this.$el.append(this._$buffer);
+
   }
 
   ListView.prototype.setItems = function(items) {
