@@ -83,9 +83,12 @@
 
     this.lazy = !!options.lazy;
     this.lazyFn = options.lazy || null;
+
+    this.pageLazy = !!options.pageLazy;
+    this.pageLazyFn = options.pageLazy || null;
     this.landscape = options.landscape || false;
     this.itemSelector = options.itemSelector || '> div';
-    this.filter = options.filter || false;
+    this.filter = options.filter || '*';
 
     // The itemSizer is a function used to get the size of a ListItem
     // By using the itemSizer we bypass injecting and detaching the element into/from the DOM
@@ -100,10 +103,11 @@
     initBuffer(this);
 
     if (this.landscape) {
-        this.begin = this.$el.offset().left;
+        this.begin = this.$el.parent().offset().left;
     } else {
-        this.begin = this.$el.offset().top;
+        this.begin = this.$el.parent().offset().top;
     }
+    // console.log("Initialized listView with begin = %d (landscape = %s)", this.begin, (this.landscape ? 'true' : 'false'));
     this.width = options.width || 0;
     this.height = options.height || 0;
 
@@ -119,6 +123,8 @@
     this.$scrollParent = options.scrollParent || $window;
 
     reappendInitialItems(this, initialItems);
+
+    insertPagesInView(this);
 
     DOMEvent.attach(this);
 
@@ -152,7 +158,7 @@
 
     // Loop all items and add 'm one by one
     items.each(function() {
-      listView.append($(this));
+      listView.append($(this), true);
     });
 
   }
@@ -221,7 +227,7 @@
       listView._$buffer.height(0);
     }
 
-    // Now, build the new filteredItems array
+    // Do loop all items (even if the filter is blank) to make sure all positions are updated!
     var filteredItems = [];
     $.each(listView.items, function(i, item) {
       if (_itemSurvivesFilter(item, filter)) {
@@ -242,6 +248,14 @@
           listView.height += item.height;
         }
 
+        // Store all properties as data-attributes on the element
+        var $listItemEl = item.$el;
+        $listItemEl
+          .attr('data-infinity-begin', item.begin)
+          .attr('data-infinity-end', item.end)
+          .attr('data-infinity-width', item.width)
+          .attr('data-infinity-height', item.height);
+
         filteredItems.push(item);
       }
     });
@@ -250,10 +264,10 @@
     // Adjust size of ListView element
     if (listView.landscape) {
       listView.$el.width(listView.width);
-      $scrollRef.animate({ scrollLeft: 0 });
+      $scrollRef.get(0).scrollLeft = 0
     } else {
       listView.$el.height(listView.height);
-      $scrollRef.animate({ scrollTop: 0 });
+      $scrollRef.get(0).scrollTop = 0
     }
 
     // Now that we've filtered our new set of items, repartition
@@ -275,12 +289,69 @@
   }
 
   ListView.prototype.reset = function() {
-    this.setItems();
+
+    // Clear the items
+    this.items = [];
+    this.filteredItems = [];
+
+    // Reset the filter
+    this.filter = '*';
+
+    // Clear the pages
+    this.startIndex = 0;
+    for (var page in this.pages) {
+      PageRegistry.remove(this.pages[page]);
+    }
+    this.pages = [];
+
+    // Clear the width
+    this.width = 0;
+    this.height = 0;
+
+    // empty the listView DOM
+    this.$el.empty()
+
+    // Reinsert buffer or things will go wrong!
+    updateBuffer(this);
+    this.$el.append(this._$buffer);
+
   }
 
   ListView.prototype.setItems = function(items) {
     this.items = (!items) ? [] : items;
     this.filterItems(this.filter)
+  }
+
+  ListView.prototype.getFilteredItems = function() {
+    return this.filteredItems;
+  }
+
+  ListView.prototype.getFilteredItemAtIndex = function(index) {
+    return this.filteredItems[index];
+  }
+
+  ListView.prototype.getItems = function() {
+    return this.items;
+  }
+
+  ListView.prototype.getItemAtIndex = function(index) {
+    return this.items[index];
+  }
+
+  ListView.prototype.numItems = function() {
+    return this.items ? this.items.length : 0
+  }
+
+  ListView.prototype.numFilteredItems = function() {
+    return this.filteredItems ? this.filteredItems.length : 0
+  }
+
+  ListView.prototype.getFilter = function() {
+    return this.filter || ''
+  }
+
+  ListView.prototype.getPages = function() {
+    return this.pages;
   }
 
   // ListView manipulation
@@ -297,7 +368,7 @@
   //
   // TODO: optimized batch appends
 
-  ListView.prototype.append = function(obj) {
+  ListView.prototype.append = function(obj, dontInsertNow) {
     if(!obj || !obj.length) return null;
 
     var item = convertToItem(this, obj),
@@ -332,8 +403,40 @@
       lastPage.append(item);
 
       // insert pages in view
-      insertPagesInView(this);
+      if (!dontInsertNow)
+        insertPagesInView(this);
 
+    }
+
+    return item;
+  };
+
+
+  // ### insertAtIndex
+  //
+  // Prepend a jQuery element or a ListItem to the ListView.
+  //
+  // Takes:
+  //
+  // - `obj`: a jQuery element, a string of valid HTML, or a ListItem.
+  //
+  // TODO: optimized batch prepend
+
+  ListView.prototype.insertAtIndex = function(obj, index, repartition) {
+    if(!obj || !obj.length) return null;
+
+    var firstPage,
+        item = convertToItem(this, obj, true),
+        pages = this.pages,
+        scrollRef = $.isWindow(this.$scrollParent.get(0)) ? document.body : this.$scrollParent.get(0),
+        initialScrollSize;
+
+    // Store item on listView for future reference (filtering and sorting)
+    this.items.splice(index, 0, item);
+
+    // Call filter to force a repartition et all
+    if (repartition) {
+      this.filterItems(this.filter);
     }
 
     return item;
@@ -546,7 +649,7 @@
 
     for(index; index < length; index++) {
       curr = pages[index];
-      if(listView.lazy) curr.lazyload(listView.lazyFn);
+      if(listView.lazy || listView.pageLazy) curr.lazyload(listView.lazyFn, listView.pageLazyFn);
       if(inserted && curr.onscreen) inOrder = false;
 
       if(!inOrder) {
@@ -582,11 +685,15 @@
           viewWidth = viewRef.width(),
           viewRight = viewLeft + viewWidth,
           nextIndex = startIndexWithinRange(listView, viewLeft, viewRight);
+
+      // console.log('listViewBegin= %d, viewLeft = %d, viewWidth = %d, viewRight = %d, nextIndex = %d, startIdex = %d, prepended = %d', listView.begin, viewLeft, viewWidth, viewRight, nextIndex, startIndex, (prepended ? "true" : "false"))
     } else {
       var viewTop = viewRef.scrollTop() - listView.begin,
           viewHeight = viewRef.height(),
           viewBottom = viewTop + viewHeight,
           nextIndex = startIndexWithinRange(listView, viewTop, viewBottom);
+
+      // console.log('listViewBegin= %d, viewTop = %d, viewHeight = %d, viewBottom = %d, nextIndex = %d, startIdex = %d, prepended = %d', listView.begin, viewTop, viewHeight, viewBottom, nextIndex, startIndex, (prepended ? "true" : "false"))
     }
 
     if( nextIndex < 0 || (nextIndex === startIndex && !prepended)) return startIndex;
@@ -1216,14 +1323,27 @@
   // - `callback`: a function of the form `function([$el]){}`. Will run on
   // each unloaded element, and will use the element as its calling context.
 
-  Page.prototype.lazyload = function(callback) {
+  Page.prototype.lazyload = function(itemCallback, pageCallback) {
+
     var $el = this.$el,
         index, length;
+
     if (!this.lazyloaded) {
-      for (index = 0, length = $el.length; index < length; index++) {
-        callback.call($el[index], $el[index]);
+
+      // Perform a callback on each item
+      if (itemCallback) {
+        for (index = 0, length = $el.length; index < length; index++) {
+          itemCallback.call($el[index], $el[index]);
+        }
       }
+
+      // Perform a callback on the page itself
+      if (pageCallback) {
+        pageCallback.call($el)
+      }
+
       this.lazyloaded = true;
+
     }
   };
 
