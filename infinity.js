@@ -155,7 +155,7 @@
 
     // Loop all items and add 'm one by one
     items.each(function() {
-      listView.append($(this));
+      listView.append($(this), true);
     });
 
   }
@@ -365,7 +365,7 @@
   //
   // TODO: optimized batch appends
 
-  ListView.prototype.append = function(obj) {
+  ListView.prototype.append = function(obj, dontInsertNow) {
     if(!obj || !obj.length) return null;
 
     var item = convertToItem(this, obj),
@@ -400,7 +400,15 @@
       lastPage.append(item);
 
       // insert pages in view
-      insertPagesInView(this);
+      if (!dontInsertNow)
+        insertPagesInView(this);
+
+    }
+
+    return item;
+  };
+
+
 
     }
 
