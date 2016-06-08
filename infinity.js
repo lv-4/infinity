@@ -409,7 +409,31 @@
   };
 
 
+  // ### insertAtIndex
+  //
+  // Prepend a jQuery element or a ListItem to the ListView.
+  //
+  // Takes:
+  //
+  // - `obj`: a jQuery element, a string of valid HTML, or a ListItem.
+  //
+  // TODO: optimized batch prepend
 
+  ListView.prototype.insertAtIndex = function(obj, index, repartition) {
+    if(!obj || !obj.length) return null;
+
+    var firstPage,
+        item = convertToItem(this, obj, true),
+        pages = this.pages,
+        scrollRef = $.isWindow(this.$scrollParent.get(0)) ? document.body : this.$scrollParent.get(0),
+        initialScrollSize;
+
+    // Store item on listView for future reference (filtering and sorting)
+    this.items.splice(index, 0, item);
+
+    // Call filter to force a repartition et all
+    if (repartition) {
+      this.filterItems(this.filter);
     }
 
     return item;
