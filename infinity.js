@@ -85,7 +85,7 @@
     this.lazyFn = options.lazy || null;
     this.landscape = options.landscape || false;
     this.itemSelector = options.itemSelector || '> div';
-    this.filter = options.filter || false;
+    this.filter = options.filter || '*';
 
     // The itemSizer is a function used to get the size of a ListItem
     // By using the itemSizer we bypass injecting and detaching the element into/from the DOM
