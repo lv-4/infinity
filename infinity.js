@@ -319,6 +319,38 @@
     this.filterItems(this.filter)
   }
 
+  ListView.prototype.getFilteredItems = function() {
+    return this.filteredItems;
+  }
+
+  ListView.prototype.getFilteredItemAtIndex = function(index) {
+    return this.filteredItems[index];
+  }
+
+  ListView.prototype.getItems = function() {
+    return this.items;
+  }
+
+  ListView.prototype.getItemAtIndex = function(index) {
+    return this.items[index];
+  }
+
+  ListView.prototype.numItems = function() {
+    return this.items ? this.items.length : 0
+  }
+
+  ListView.prototype.numFilteredItems = function() {
+    return this.filteredItems ? this.filteredItems.length : 0
+  }
+
+  ListView.prototype.getFilter = function() {
+    return this.filter || ''
+  }
+
+  ListView.prototype.getPages = function() {
+    return this.pages;
+  }
+
   // ListView manipulation
   // ---------------------
 
