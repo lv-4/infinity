@@ -682,11 +682,15 @@
           viewWidth = viewRef.width(),
           viewRight = viewLeft + viewWidth,
           nextIndex = startIndexWithinRange(listView, viewLeft, viewRight);
+
+      // console.log('listViewBegin= %d, viewLeft = %d, viewWidth = %d, viewRight = %d, nextIndex = %d, startIdex = %d, prepended = %d', listView.begin, viewLeft, viewWidth, viewRight, nextIndex, startIndex, (prepended ? "true" : "false"))
     } else {
       var viewTop = viewRef.scrollTop() - listView.begin,
           viewHeight = viewRef.height(),
           viewBottom = viewTop + viewHeight,
           nextIndex = startIndexWithinRange(listView, viewTop, viewBottom);
+
+      // console.log('listViewBegin= %d, viewTop = %d, viewHeight = %d, viewBottom = %d, nextIndex = %d, startIdex = %d, prepended = %d', listView.begin, viewTop, viewHeight, viewBottom, nextIndex, startIndex, (prepended ? "true" : "false"))
     }
 
     if( nextIndex < 0 || (nextIndex === startIndex && !prepended)) return startIndex;
