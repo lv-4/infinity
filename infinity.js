@@ -261,10 +261,10 @@
     // Adjust size of ListView element
     if (listView.landscape) {
       listView.$el.width(listView.width);
-      $scrollRef.animate({ scrollLeft: 0 });
+      $scrollRef.get(0).scrollLeft = 0
     } else {
       listView.$el.height(listView.height);
-      $scrollRef.animate({ scrollTop: 0 });
+      $scrollRef.get(0).scrollTop = 0
     }
 
     // Now that we've filtered our new set of items, repartition
