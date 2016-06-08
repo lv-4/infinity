@@ -121,6 +121,8 @@
 
     reappendInitialItems(this, initialItems);
 
+    insertPagesInView(this);
+
     DOMEvent.attach(this);
 
   }
